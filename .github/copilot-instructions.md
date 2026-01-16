@@ -1,0 +1,27 @@
+# Copilot Instructions for FILMS-ANALYTICS
+
+- **Scope**: Two notebooks drive the project: `flm_data_analysis.ipynb` (API exploration + analytics queries) and `flm_data_viz.ipynb` (cached aggregations + charts). Keep changes notebook-friendly and avoid breaking existing cells.
+- **API client**: All data comes from `filmsapisdk` with `MovieClient(MovieConfig(movie_base_url="https://datatech.onrender.com"))`. Reuse this base URL unless the user requests otherwise.
+- **Rate limiting**: The API is manually throttled with small batches and `time.sleep(0.5)`. Keep batch sizes around 200–1000 items and preserve the sleeps to avoid server limits.
+- **Batch patterns**:
+  - Movies: `client.list_movies(limit=200, skip=...)` using `output_format='dict'`; iterate until empty.
+  - Ratings: `client.list_ratings(limit=1000 or 200, skip=..., output_format='pandas'|'dict')` and accumulate.
+  - Tags: `client.list_tags(limit=1000, skip=...)` until empty.
+  - Use `client.get_analytics()` first to read `movie_count`/`rating_count` for loop bounds.
+- **Caching convention**: Heavy pulls are cached under `output/` as parquet plus a JSON meta file carrying API counts to detect staleness. Examples:
+  - Genres: `genre_counts.parquet` + `genre_counts_meta.json` keyed by `movie_count`.
+  - Movies by year: `movies_by_year.parquet` + `movies_by_year_meta.json` keyed by `movie_count`.
+  - Top movies: `top_movies_by_ratings.parquet` + `meta_top_movies.json` keyed by both `movie_count` and `rating_count`.
+  - When adding new jobs, follow the same pattern: read meta, compare analytics, recompute if counts differ, write parquet (index=False) and meta JSON.
+- **Parsing helpers**: Years are extracted from titles via `re.compile(r"\((\d{4})\)$")`. Genres are pipe-delimited; split with `genres.split('|')`.
+- **Visualizations**: Plotly Express is the default (`px.bar(...)`) with horizontal bars and Viridis palette; seaborn/matplotlib are imported but mostly unused. Preserve `fig.update_layout(..., height=...)` sizing and category ordering when adding plots.
+- **Data shapes**:
+  - Genre counts: columns `genre`, `count` (top 10).
+  - Movies by year: columns `year`, `movie_count` (sorted ascending).
+  - Top movies: columns `movieId`, `rating_count`, `avg_rating`, `title` (top 20 by rating_count).
+- **New API fetches**: Prefer `output_format='pandas'` for data frames and `'dict'` when iterating lightweight. Handle empty batches as the loop terminator.
+- **Error handling**: For per-movie fetches (titles/genres), wrap in try/except and fall back to placeholders; log the movieId on failure.
+- **Output directory**: Ensure `Path("output").mkdir(exist_ok=True)` before writing. Avoid hardcoding absolute paths; keep everything relative to repo root.
+- **Dependencies**: pandas, plotly, matplotlib, seaborn, pyarrow (for parquet), filmsapisdk. When adding code, note imports at top of the notebook cell.
+- **Style**: Keep comments in French (existing pattern) and prefer concise markdown headings inside notebooks. Maintain the existing mix of markdown + Python cells.
+- **Performance**: Do not remove batching or sleeps; they are intentional to protect the API. If you add heavier analytics, reuse cached data instead of re-querying the API.
