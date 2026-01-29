@@ -52,7 +52,7 @@ Genres favoris des utilisateurs actifs (ratings ≥ 4.0) → tags associés.
 
 ---
 
-## 📁 Structure du projet
+## Structure du projet
 
 ```
 FILMS-ANALYTICS/
@@ -75,7 +75,7 @@ FILMS-ANALYTICS/
 
 ---
 
-## 🚀 Démarrage rapide
+## Démarrage rapide
 
 - **Prérequis**
 ```bash
@@ -121,9 +121,9 @@ else:
 # Décision : cache ou refetch
 api_count = client.get_analytics().movie_count
 if cache_file.exists() and cached_count == api_count:
-    df = pd.read_parquet(cache_file)  # 🚀 Rapide
+    df = pd.read_parquet(cache_file)  # Rapide
 else:
-    df = fetch_from_api()  # 📡 Lent
+    df = fetch_from_api()  # Lent
     df.to_parquet(cache_file, index=False)
     json.dump({"movie_count": api_count}, meta_file)
 ```
