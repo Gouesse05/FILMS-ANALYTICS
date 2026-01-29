@@ -1,6 +1,6 @@
 # FILMS-ANALYTICS
 
-Analyse de données cinématographique en temps réel avec une API REST. Un projet de **data science + data engineering** combinant exploration API, batching intelligent, caching stratégique et visualisations interactives.
+Analyse de données cinématographique en temps réel avec une API REST. Projet de **data science et ingénierie des données** combinant exploration API, traitement par lots, mise en cache et visualisations interactives.
 
 ---
 
@@ -8,18 +8,18 @@ Analyse de données cinématographique en temps réel avec une API REST. Un proj
 
 **FILMS-ANALYTICS** interroge une API REST pour extraire, transformer et visualiser des données sur :
 - **9 700+ films** (titres, genres, années)
-- **100 000+ notes** (ratings utilisateurs)
+- **100 000+ notes** (notes utilisateurs)
 - **Tags** appliqués par les utilisateurs aux films
 
 Le projet démontre :
-- **ETL robuste** : batching avec throttling pour respecter les limites API
-- **Caching intelligent** : parquet + métadonnées JSON pour éviter les requêtes redondantes
+- **ETL robuste** : traitement par lots et limitation de débit pour respecter les limites API
+- **Mise en cache** : parquet + métadonnées JSON pour éviter les requêtes redondantes
 - **Analyse exploratoire** : agrégations pandas, statistiques par utilisateur/genre
 - **Visualisations interactives** : graphiques Plotly exportés en HTML
 
 ---
 
-## Cas d'usage & insights
+## Cas d'usage et analyses
 
 ### 1. Distribution des genres 
 Quels genres dominent le catalogue ? Top 10 par fréquence.  
@@ -43,11 +43,11 @@ Genres favoris des utilisateurs actifs (ratings ≥ 4.0) → tags associés.
 
 | Composant | Technologie |
 |-----------|-------------|
-| **API Client** | `filmsapisdk` (wrapper custom) |
-| **Backend API** | REST sur Render (https://datatech.onrender.com) |
-| **Data Processing** | Python 3.12, Pandas, NumPy |
-| **Visualization** | Plotly Express |
-| **Caching** | Parquet (PyArrow) + JSON |
+| **Client API** | `filmsapisdk` (wrapper custom) |
+| **API backend** | REST sur Render (https://datatech.onrender.com) |
+| **Traitement des données** | Python 3.12, Pandas, NumPy |
+| **Visualisation** | Plotly Express |
+| **Mise en cache** | Parquet (PyArrow) + JSON |
 | **Notebooks** | Jupyter (VS Code) |
 
 ---
@@ -56,20 +56,20 @@ Genres favoris des utilisateurs actifs (ratings ≥ 4.0) → tags associés.
 
 ```
 FILMS-ANALYTICS/
-├── flm_data_analysis.ipynb      # Exploration API, agrégations, business analytics
-├── flm_data_viz.ipynb           # Visualisations avec caching
+├── flm_data_analysis.ipynb      # Exploration API, agrégations, analyses métier
+├── flm_data_viz.ipynb           # Visualisations avec mise en cache
 ├── output/                       # Données & graphiques générés
-│   ├── genre_counts.html         # Bar chart genres
+│   ├── genre_counts.html         # Graphique des genres
 │   ├── genre_counts.parquet      # Cache parquet
 │   ├── genre_counts_meta.json    # Metadata (movie_count)
-│   ├── movies_by_year.html       # Bar chart timeline
+│   ├── movies_by_year.html       # Chronologie des films
 │   ├── movies_by_year.parquet
 │   ├── movies_by_year_meta.json
-│   ├── top_movies_by_ratings.html  # Bar chart avec couleur (rating moyen)
+│   ├── top_movies_by_ratings.html  # Graphique avec couleur (note moyenne)
 │   ├── top_movies_by_ratings.parquet
-│   └── meta_top_movies.json      # Metadata (movie_count + rating_count)
+│   └── meta_top_movies.json      # Métadonnées (movie_count + rating_count)
 ├── .github/
-│   └── copilot-instructions.md  # Conventions & patterns pour AI agents
+│   └── copilot-instructions.md  # Conventions et standards
 └── README.md
 ```
 
@@ -90,15 +90,15 @@ pip install pandas plotly matplotlib seaborn pyarrow filmsapisdk kaleido
 3. Consulter les graphiques HTML dans `output/`
 
 - **Observations clés**
-- **Throttling** : 0.5s entre les requêtes batch (intentionnel, respecte limites API)
-- **Caching** : Détecte si données changées via métadonnées (movie_count, rating_count)
+- **Limitation de débit** : 0.5s entre les requêtes batch (intentionnel, respecte limites API)
+- **Mise en cache** : détecte les changements via métadonnées (movie_count, rating_count)
 - **Formats** : `output_format='dict'` pour itération, `'pandas'` pour DataFrames
 
 ---
 
-## Patterns & conventions
+## Conventions
 
-### Batching
+### Traitement par lots
 ```python
 limit, skip = 200, 0
 while True:
@@ -107,18 +107,18 @@ while True:
         break
     # traiter batch
     skip += limit
-    time.sleep(0.5)  # Crucial : respect limites API
+    time.sleep(0.5)  # Respect des limites API
 ```
 
-### Caching avec validation
+### Mise en cache avec validation
 ```python
-# Lire metadata
+# Lire les métadonnées
 if meta_file.exists():
     cached_count = json.load(meta_file)["movie_count"]
 else:
     cached_count = 0
 
-# Décision : cache ou refetch
+# Décision : cache ou réinterrogation
 api_count = client.get_analytics().movie_count
 if cache_file.exists() and cached_count == api_count:
     df = pd.read_parquet(cache_file)  # Rapide
@@ -133,7 +133,7 @@ else:
 # Années depuis titres : "Forrest Gump (1994)"
 year = int(re.search(r"\((\d{4})\)$", title).group(1))
 
-# Genres pipe-delimiters
+# Genres séparés par "|"
 genres = "Action|Drama|Sci-Fi".split('|')
 
 # Agrégation avec defaultdict
@@ -145,7 +145,7 @@ for rating in ratings:
 
 ---
 
-## Métriques & insights extraits
+## Métriques et analyses extraites
 
 | Métrique | Valeur | Source |
 |----------|--------|--------|
@@ -153,41 +153,41 @@ for rating in ratings:
 | Notes totales | ~100 836 | API analytics |
 | Genres distincts | 20+ | Parsing |
 | Films avec notes | 4 000+ | Agrégation |
-| Utilisateurs actifs | 600+ | Counts by userId |
+| Utilisateurs actifs | 600+ | Comptes par userId |
 
 ---
 
 ## Points forts du projet
 
-1. **Respect des ressources** : Batching + throttling → pas de rate-limiting
-2. **Optimisation** : Cache parquet réutilisable, pas de refetch inutile
-3. **Robustesse** : Try/except sur fetches per-item, fallbacks gracieux
+1. **Respect des ressources** : traitement par lots et limitation de débit → pas de blocage
+2. **Optimisation** : cache parquet réutilisable, pas de réinterrogation inutile
+3. **Robustesse** : try/except par item, fallbacks gracieux
 4. **Reproductibilité** : Métadonnées sauvegardées, notebooks exécutables
-5. **Documentation** : Conventions en `.github/copilot-instructions.md`
+5. **Documentation** : Conventions en `.github/ignorer.md`
 
 ---
 
-## Apprentissages & compétences démontrées
+## Apprentissages et compétences démontrées
 
-- **Data Engineering** : API consumption, ETL pipelines, caching strategies
-- **Data Analysis** : Pandas aggregations, time-series extraction, user behavior analysis
-- **Data Visualization** : Plotly interactive charts, color scales, layouts
-- **Python** : Batch processing, exception handling, functional transformations
-- **Best Practices** : Logging, metadata management, rate-limit awareness
+- **Ingénierie des données** : consommation API, pipelines ETL, stratégies de cache
+- **Analyse de données** : agrégations Pandas, extraction temporelle, analyse des usages
+- **Visualisation** : graphiques Plotly interactifs, échelles de couleur, mise en page
+- **Python** : traitement par lots, gestion d’exceptions, transformations fonctionnelles
+- **Bonnes pratiques** : logs, gestion des métadonnées, respect des limites
 
 ---
 
 ## Liens utiles
 
-- [Graphiques générés](output/) — Explore les visualisations HTML
+- [Graphiques générés](output/) — visualisations HTML
 - [Notebooks interactifs](.) — `flm_data_analysis.ipynb` et `flm_data_viz.ipynb`
-- [Conventions de code](../.github/copilot-instructions.md) — Patterns & standards
+- [Conventions de code](../.github/ignorer.md) — règles et standards
 
 ---
 
 ## Licence & Contexte
 
-Projet de **portfolio / apprentissage** démontrant des compétences en data science et data engineering.  
+Projet de **portfolio / apprentissage** démontrant des compétences en data science et ingénierie des données.  
 Données : API REST publique (simulation pédagogique).
 
 ---
